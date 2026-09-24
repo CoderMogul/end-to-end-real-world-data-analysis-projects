@@ -1,0 +1,60 @@
+# Virtual environment
+.venv
+venv
+env
+*/venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Distribution and packaging
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Environment variable files (keep secrets out of Git)
+.env
+.env.local
+.env.*.local
+
+# IDE and editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Pytest cache
+.pytest_cache/
+.cache/
+
+# Coverage reports
+htmlcov/
+.coverage
+coverage.xml
+
+# Model files (can be very large)
+*.pkl
+*.h5
+*.pt
+*.pth
+*.ckpt
+
+# Data files (usually too large for Git)
+*.csv
+*.parquet
+*.xlsx
+*.json
