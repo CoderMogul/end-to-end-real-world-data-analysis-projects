@@ -65,3 +65,25 @@ INNER JOIN communicates your actual intent clearly: "only keep rows that are con
 It's typically the more efficient choice when you know matches are guaranteed, since the optimizer doesn't need to account for the "no match" case
 
 
+### How I could have reordered my age midpoint column
+SELECT 
+    encounter_id,
+    patient_nbr,
+    race,
+    gender,
+    age,
+    age_midpoint,   -- placed right after age
+    weight,
+    -- ... list every other column in your preferred order
+INTO diabetic_data_dedup_reordered
+FROM diabetic_data_dedup;
+
+DROP TABLE diabetic_data_dedup;
+
+EXEC sp_rename 'diabetic_data_dedup_reordered', 'diabetic_data_dedup';
+
+Option 2 — Use SSMS's table designer (GUI)
+
+In SSMS: right-click the table → Design → drag age_midpoint to sit right after age in the grid → save. Behind the scenes, SSMS actually does something similar to Option 1 (creates a new table, copies data, drops the old one, renames) — it just automates it for you.
+
+
