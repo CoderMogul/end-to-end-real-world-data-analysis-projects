@@ -10,6 +10,10 @@
   <img src="https://img.shields.io/badge/Connection-VSCode-purple?style=flat-square"/>
 </p>
 ---
+<p align="center">
+  <img src="images/public-domain-vectors-7B3GPv6kgwU-unsplash.jpg" alt="Hospital exterior" width="700"/>
+</p>
+
 
 ## 🧠 Business Problem
 
@@ -158,4 +162,4 @@ and target table.
 **Takeaway**: Don't assume one file equals one table — inspect raw file 
 structure before trusting an automated import tool.
 
-## 🎥 YouTube Walkthrough
+
