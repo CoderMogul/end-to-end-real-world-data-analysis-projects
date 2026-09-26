@@ -11,7 +11,7 @@
 </p>
 ---
 <p align="center">
-  <img src="images/public-domain-vectors-7B3GPv6kgwU-unsplash.jpg" alt="Hospital exterior" width="700"/>
+  <img src="images/public-domain-vectors-7B3GPv6kgwU-unsplash.jpg" alt="Hospital exterior" width="400"/>
 </p>
 
 
