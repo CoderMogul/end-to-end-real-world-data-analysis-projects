@@ -3,7 +3,6 @@
     Hospital Readmission Risk Analysis
   </h1>
 </div>
-
 <p align="center">
   <img src="https://img.shields.io/badge/SQL-Advanced%20Analytics-blue?style=flat-square"/>
   <img src="https://img.shields.io/badge/Database-SQL%20SERVER-orange?style=flat-square"/>
@@ -13,8 +12,6 @@
 <p align="center">
   <img src="images/public-domain-vectors-7B3GPv6kgwU-unsplash.jpg" alt="Hospital exterior" width="400"/>
 </p>
-
-
 ## 🧠 Business Problem
 
 Readmitting a patient within 30 days of discharge isn't just a clinical setback — 
