@@ -3,11 +3,13 @@
     Hospital Readmission Risk Analysis
   </h1>
 </div>
+
 <p align="center">
   <img src="https://img.shields.io/badge/SQL-Advanced%20Analytics-blue?style=flat-square"/>
   <img src="https://img.shields.io/badge/Database-SQL%20SERVER-orange?style=flat-square"/>
   <img src="https://img.shields.io/badge/Connection-VSCode-purple?style=flat-square"/>
 </p>
+
 ---
 
 <p align="center">
@@ -46,21 +48,65 @@ risk of 30-day readmission. Specifically, it sets out to:
 - **Database**: Microsoft SQL Server
 - **Tools**: Python (pandas, pyodbc) for data loading and preprocessing; T-SQL for 
   data cleaning, transformation, and analysis
+
 ---
 
 ## ⚙️ Technical Approach
 
 - **Cleaning**: Replaced placeholder missing values with NULLs, removed a column 
-  (`weight`) with ~97% missing data, kept only one encounter per patient to avoid 
-  duplicate bias, and excluded patients who were inactive or discharged to hospice
+  (`weight`) with ~97% missing data, deduplicated to one encounter per patient 
+  (~100,000 → ~70,000 encounters) to avoid duplicate bias, and excluded patients 
+  who were inactive or discharged to hospice
 - **Exploratory Analysis**: Established baseline readmission rates by age 
   (`age_midpoint`), admission type, and diagnosis category
 - **Advanced Analysis**: Built a reusable high-risk patient segment using a CTE, 
-  applied a window function to rank patients by risk, grouped patients by medication 
-  use and number of diagnoses, and identified diagnosis categories with 
-  above-average readmission rates
+  applied window functions to rank and stratify patients by risk, grouped patients 
+  by medication use and number of diagnoses, and identified diagnosis categories 
+  with above-average readmission rates
 - **Findings**: Summarized results into four key findings that connect back to 
   the core business problem
+
+---
+
+## 🔍 Key Findings
+
+### 1. Injury and Circulatory diagnoses carry the highest readmission risk
+Among primary diagnosis categories, **Injury** (10.8%) and **Circulatory** 
+(9.7%) conditions showed the highest 30-day readmission rates — both above 
+the diabetes-specific readmission rate (9.1%) itself. This suggests care 
+teams may benefit from closer discharge planning for patients admitted with 
+trauma or cardiovascular conditions, not just those with a primary diabetes 
+diagnosis.
+
+### 2. Discharge disposition is the strongest predictor identified
+Readmission risk varied dramatically by where a patient was discharged to. 
+Patients discharged to another **rehabilitation facility** were readmitted 
+at **26.3%** — nearly four times the rate of patients discharged directly 
+**home** (6.9%). Transfers to another short-term hospital (13.8%) and 
+skilled nursing facilities (13.4%) also showed elevated risk. This points 
+to post-acute care transitions as a key area for readmission-reduction efforts.
+
+### 3. A medication change at discharge shows a modest association with readmission
+Patients whose diabetes medication was changed during their stay had a 
+slightly higher readmission rate (9.4%) than those with no medication 
+change (8.6%). The difference is real but modest, suggesting medication 
+adjustment alone is not a strong standalone predictor.
+
+### 4. A1C testing status shows a counterintuitive pattern
+Patients with **no A1C test recorded** had the highest readmission rate 
+(9.1%), while those with results indicating poor glucose control (`>8`) 
+had the lowest (8.2%). Rather than suggesting poor glucose control is 
+protective, this likely reflects that patients who receive A1C testing 
+benefit from more thorough overall clinical engagement — a pattern also 
+noted in the original research behind this dataset. This suggests testing 
+practices themselves may be a meaningful lever for reducing readmissions, 
+independent of the result.
+
+### Summary
+These findings suggest that discharge planning — particularly for patients 
+transferred to rehab or skilled nursing facilities — may offer the highest 
+leverage for reducing avoidable 30-day readmissions, alongside closer 
+monitoring for Injury and Circulatory diagnoses.
 
 ---
 
@@ -160,5 +206,3 @@ and target table.
 
 **Takeaway**: Don't assume one file equals one table — inspect raw file 
 structure before trusting an automated import tool.
-
-
