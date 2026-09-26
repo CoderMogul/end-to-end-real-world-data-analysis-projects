@@ -1,89 +1,161 @@
-### LOADING.
+<div align="center">
+  <h1>
+    Hospital Readmission Risk Analysis
+  </h1>
+</div>
 
-- The number_emergency was in bit. I changed it to int.
-- When loading the IDS; the first column was in tinyin. I Changed it to just int.
-- I had to split the ids mapping csv into 3 csv. This is to allow me bulk insert.
+<p align="center">
+  <img src="https://img.shields.io/badge/SQL-Advanced%20Analytics-blue?style=flat-square"/>
+  <img src="https://img.shields.io/badge/Database-SQL%20SERVER-orange?style=flat-square"/>
+  <img src="https://img.shields.io/badge/Connection-VSCode-purple?style=flat-square"/>
+</p>
+---
 
+## 🧠 Business Problem
 
-### Problems with tables contraints not taling nulls.
-UPDATE changes the actual data values sitting inside existing rows. This is separate from ALTER TABLE — once the structural rule allows NULLs (after your ALTER TABLE), the UPDATE statement is the one that goes row by row and actually performs the data cleanup: converting the placeholder text '?' into a genuine NULL.
+Readmitting a patient within 30 days of discharge isn't just a clinical setback — 
+it's a costly one, triggering financial penalties for hospitals under federal 
+quality programs. Drawing on 10 years of encounter records from 130 U.S. hospitals, 
+this project investigates which patient profiles, diagnoses, and treatment decisions 
+are most predictive of early readmission, with the goal of surfacing actionable 
+risk patterns.
 
-### Cleaing the ids_mapping tables.
-The weight table has over 95% of missing null value, hence I will drop it.
+---
 
+## 🎯 Objective
 
-### What INNER JOIN does here
-sql
-FROM diabetic_data_raw t
-INNER JOIN (
-    SELECT patient_nbr, MIN(encounter_id) AS first_encounter
-    FROM diabetic_data_raw
-    GROUP BY patient_nbr
-) AS first_encounters 
-ON t.patient_nbr = first_encounters.patient_nbr 
-AND t.encounter_id = first_encounters.first_encounter
+This project aims to help care teams proactively identify patients at elevated 
+risk of 30-day readmission. Specifically, it sets out to:
 
-INNER JOIN only keeps rows where a match exists on both sides. It discards anything that doesn't have a matching counterpart.
+- Identify the diagnoses, demographics, and care patterns most strongly 
+  associated with readmission risk
+- Surface patterns that could help focus follow-up resources on high-risk patients
+- Provide a data-driven basis for reducing avoidable readmissions
 
-Why that's exactly right in this case
+---
 
-Think about where the subquery (first_encounters) actually comes from — it's built entirely from diabetic_data_raw itself:
+## 📊 Data & Inputs
 
-sql
-SELECT patient_nbr, MIN(encounter_id) AS first_encounter
-FROM diabetic_data_raw
-GROUP BY patient_nbr
+- **Dataset**: Diabetes 130-US Hospitals for Years 1999–2008 (UCI Machine Learning 
+  Repository, CC BY 4.0) — ~100,000 patient encounters across 130 hospitals, 1999–2008
+- **Format**: Raw CSV files, including a separate ID mapping file for admission type, 
+  admission source, and discharge disposition codes
+- **Database**: Microsoft SQL Server
+- **Tools**: Python (pandas, pyodbc) for data loading and preprocessing; T-SQL for 
+  data cleaning, transformation, and analysis
+---
 
-Every single patient_nbr that appears in the subquery is guaranteed to already exist in the main table — because that's literally where it came from. There is no possible scenario where first_encounters contains a patient_nbr that diabetic_data_raw doesn't have, since it's derived directly from that same table.
+## ⚙️ Technical Approach
 
-So the two sides of this join are guaranteed to always match — every row from the subquery will always find its corresponding row back in t. There's no "orphan" data on either side to worry about.
+- **Cleaning**: Replaced placeholder missing values with NULLs, removed a column 
+  (`weight`) with ~97% missing data, kept only one encounter per patient to avoid 
+  duplicate bias, and excluded patients who were inactive or discharged to hospice
+- **Exploratory Analysis**: Established baseline readmission rates by age 
+  (`age_midpoint`), admission type, and diagnosis category
+- **Advanced Analysis**: Built a reusable high-risk patient segment using a CTE, 
+  applied a window function to rank patients by risk, grouped patients by medication 
+  use and number of diagnoses, and identified diagnosis categories with 
+  above-average readmission rates
+- **Findings**: Summarized results into four key findings that connect back to 
+  the core business problem
 
-Why LEFT JOIN wouldn't change anything here (but why you'd normally consider it)
+---
 
-LEFT JOIN matters when you want to keep all rows from the left table even if there's no match on the right — filling in NULL for the right side's columns where no match exists.
+## 🛠 Key Skills Demonstrated
 
-But in your query, since the subquery is 100% derived from the same table you're joining it against, there's no case where a "left" row could possibly lack a match. Using LEFT JOIN here would produce the exact same result as INNER JOIN — just potentially slightly less efficient, since the query optimizer sometimes has to work a bit harder to prove that no NULL-padding cases exist with a LEFT JOIN, whereas INNER JOIN tells it directly "only keep matches" — which is a stronger, clearer signal of intent.
+- Python to parse and load the ID-mapping reference data into separate SQL Server 
+  tables, including database connectivity via `pyodbc`
+- CTEs to stage a clean, reusable risk cohort across multiple queries
+- Window functions: `RANK() OVER (PARTITION BY ...)` to rank medication burden 
+  within age groups, and `NTILE(4)` to stratify patients into risk quartiles by 
+  prior inpatient visit history
+- CASE-based tiering to convert continuous variables (medication count, diagnosis 
+  count) into business-readable risk categories
+- Correlated subqueries with `HAVING` to isolate diagnosis categories performing 
+  above the population-wide average
+- Multi-table joins against ID-mapping reference tables to convert numeric codes 
+  into readable labels
+- Applied three complementary risk-segmentation approaches — ranked triage, 
+  quartile stratification, and tiered categorization — suited to different 
+  stakeholder needs (clinical prioritization vs. population-level targeting 
+  vs. non-technical reporting)
+- Cross-dialect SQL fluency — translated queries between MySQL and T-SQL syntax, 
+  including identifier quoting, boolean aggregation, and data type differences
 
-When you WOULD need LEFT JOIN instead
+---
 
-You'd reach for LEFT JOIN when the two tables are genuinely independent datasets that might not fully overlap — for example:
+## 🧩 Challenges & Key Learnings
 
-sql
-SELECT p.patient_nbr, a.appointment_date
-FROM patients p
-LEFT JOIN appointments a
-ON p.patient_nbr = a.patient_nbr
+### 1. Integer Division Silently Truncating Aggregate Results
+Calculating readmission percentages with `AVG()` on an integer 0/1 flag column 
+returned `0` for every group, despite the underlying data clearly containing 
+readmitted cases.
 
-Here, some patients might have zero appointments. If you used INNER JOIN, those patients would disappear from your results entirely (since there's no matching appointment row). LEFT JOIN keeps every patient regardless, showing NULL for appointment_date when there's no match — useful when you specifically want to know about the absence of a match too.
+**Fix**: Forced decimal arithmetic by multiplying the flag column by `1.0` 
+before aggregating (`AVG(readmitted_flag * 1.0)`).
 
-Bottom line for your query
+**Takeaway**: Integer division is a common, silent source of wrong results in 
+SQL — any division or averaging involving whole-number columns should be 
+treated as a risk area by default.
 
-INNER JOIN is the correct and intentional choice here because:
+---
 
-The subquery is guaranteed to be a subset of the same table you're joining back into — no possibility of unmatched rows
-INNER JOIN communicates your actual intent clearly: "only keep rows that are confirmed to be someone's first encounter"
-It's typically the more efficient choice when you know matches are guaranteed, since the optimizer doesn't need to account for the "no match" case
+### 2. Safely Casting Mixed Alphanumeric Diagnosis Codes
+ICD-9 diagnosis codes aren't purely numeric — V-codes (`V45`) and E-codes 
+(`E849`) exist alongside standard numeric codes. Casting these directly to 
+`INT` for range-based categorization would throw a runtime error and halt 
+the query.
 
+**Fix**: Added a pattern-matching guard (`LEFT(diag_1,3) NOT LIKE '%[^0-9]%'`) 
+to confirm a value was purely numeric before attempting the cast, letting 
+non-numeric codes fall through safely to an "Other" category.
 
-### How I could have reordered my age midpoint column
-SELECT 
-    encounter_id,
-    patient_nbr,
-    race,
-    gender,
-    age,
-    age_midpoint,   -- placed right after age
-    weight,
-    -- ... list every other column in your preferred order
-INTO diabetic_data_dedup_reordered
-FROM diabetic_data_dedup;
+**Takeaway**: When casting real-world codes to a numeric type, validate the 
+format first — don't assume every value will conform.
 
-DROP TABLE diabetic_data_dedup;
+---
 
-EXEC sp_rename 'diabetic_data_dedup_reordered', 'diabetic_data_dedup';
+### 3. NULL Handling Across the Python–SQL Boundary
+Converting placeholder text (`"NULL"`) to a true missing value in pandas 
+produced `NaN` — a float — rather than Python's `None`. SQL Server rejected 
+this with a data type error on insert, since it was receiving a float, not 
+a null string.
 
-Option 2 — Use SSMS's table designer (GUI)
+**Fix**: Explicitly checked for `NaN` with `pd.isna()` and converted it to 
+`None` immediately before insertion, so `pyodbc` correctly passed a true SQL 
+`NULL`.
 
-In SSMS: right-click the table → Design → drag age_midpoint to sit right after age in the grid → save. Behind the scenes, SSMS actually does something similar to Option 1 (creates a new table, copies data, drops the old one, renames) — it just automates it for you.
+**Takeaway**: A missing value isn't represented the same way across tools — 
+`NaN`, `None`, and SQL `NULL` are related but distinct, and crossing between 
+pandas and a database requires explicit handling.
 
+---
 
+### 4. NOT NULL Constraints Blocking Legitimate Data Cleaning
+Several source columns (`weight`, `race`, `payer_code`, lookup table 
+descriptions) were auto-created as `NOT NULL` during import, which blocked 
+converting placeholder values (`'?'`, `'NULL'`) into true SQL `NULL`.
+
+**Fix**: Used `ALTER TABLE ... ALTER COLUMN ... NULL` to relax the constraint 
+before running the corresponding `UPDATE` statement.
+
+**Takeaway**: Structural rules (table schema) and data values are two separate 
+layers — cleaning data sometimes requires changing the rules first, not just 
+the values.
+
+---
+
+### 5. Multi-Section CSV Parsing
+The ID-mapping reference file (admission type, admission source, discharge 
+disposition) contained three separate lookup tables stacked in a single CSV, 
+each with its own header row. A standard import treated later headers as data 
+rows, causing type-conversion errors.
+
+**Fix**: Parsed the file line-by-line in Python, detecting section boundaries 
+by matching known header names, and routed each block into its own DataFrame 
+and target table.
+
+**Takeaway**: Don't assume one file equals one table — inspect raw file 
+structure before trusting an automated import tool.
+
+## 🎥 YouTube Walkthrough
