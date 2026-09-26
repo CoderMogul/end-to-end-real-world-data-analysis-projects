@@ -9,9 +9,11 @@
   <img src="https://img.shields.io/badge/Connection-VSCode-purple?style=flat-square"/>
 </p>
 ---
+
 <p align="center">
-  <img src="images/public-domain-vectors-7B3GPv6kgwU-unsplash.jpg" alt="Hospital exterior" width="400"/>
+  <img src="images/public-domain-vectors-7B3GPv6kgwU-unsplash.jpg" alt="Hospital exterior" width="100"/>
 </p>
+
 ## 🧠 Business Problem
 
 Readmitting a patient within 30 days of discharge isn't just a clinical setback — 
